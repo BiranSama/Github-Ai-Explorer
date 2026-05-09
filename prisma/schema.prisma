@@ -1,0 +1,50 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Project {
+  id                        String    @id
+  name                      String
+  fullName                  String
+  owner                     String
+  description               String?
+  primaryLanguage           String?
+  languages                 String?   @default("[]")
+  stars                     Int       @default(0)
+  forks                     Int       @default(0)
+  openIssues                Int       @default(0)
+  lastPushed                DateTime
+  trendingDate              DateTime
+  source                    String    @default("search")
+  aiSummary                 String?
+  aiSummaryGeneratedAt      DateTime?
+  fetchedAt                 DateTime
+  pushLogs                  PushLog[]
+
+  @@map("projects")
+}
+
+model UserPreference {
+  id                  Int       @id @default(autoincrement())
+  preferredLanguages  String    @default("[]")
+  notifyEnabled       Boolean   @default(false)
+  notifyInterval      Int       @default(60)
+  lastNotifyAt        DateTime?
+  pushSubscription    String?
+  updatedAt           DateTime  @updatedAt
+}
+
+model PushLog {
+  id        Int       @id @default(autoincrement())
+  projectId String
+  pushedAt  DateTime  @default(now())
+  readAt    DateTime?
+  project   Project   @relation(fields: [projectId], references: [id])
+
+  @@map("push_logs")
+}
