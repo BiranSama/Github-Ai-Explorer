@@ -93,7 +93,33 @@ cd github-ai-explorer
 npm install
 ```
 
-### 3. 配置环境变量
+> **依赖需要手动上传吗？** 不需要。`node_modules/` 已通过 `.gitignore` 忽略，别人克隆后运行 `npm install` 即可自动安装所有依赖。你只需确保 `package.json` 和 `package-lock.json` 在仓库中。
+
+### 3. 一键配置环境变量（推荐）
+
+项目提供了交互式脚本，自动帮你检测模型、验证 API Key、生成 VAPID 密钥，无需手动编辑 `.env`。
+
+**Windows 用户：**
+```powershell
+# PowerShell 脚本（功能更完善，支持模型自动检测）
+.\setup-llm.ps1
+```
+
+**CMD / 传统 Windows：**
+```cmd
+setup-llm.bat
+```
+
+脚本会引导你完成：
+1. 选择 LLM 服务商（OpenAI / Anthropic / DeepSeek 等）
+2. 输入 API Base URL 和 Key
+3. **自动检测**该账号下可用的模型列表
+4. 选择模型（或手动输入）
+5. **验证** API Key 是否可用
+6. 配置 Web Push 的 VAPID 邮箱和密钥
+7. 自动生成 `.env` 文件
+
+### 4. 手动配置环境变量（备选）
 
 ```bash
 cp .env.example .env
@@ -126,14 +152,14 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_VAPID_PUBLIC_KEY=BJxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
-### 4. 初始化数据库
+### 5. 初始化数据库
 
 ```bash
 npx prisma migrate dev --name init
 npx prisma generate
 ```
 
-### 5. 启动开发服务器
+### 6. 启动开发服务器
 
 ```bash
 npm run dev
