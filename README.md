@@ -83,7 +83,7 @@ github-ai-explorer/
 ### 1. 克隆项目
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/github-ai-explorer.git
+git clone https://github.com/BiranSama/Github-Ai-Explorer.git
 cd github-ai-explorer
 ```
 
