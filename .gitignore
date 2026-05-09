@@ -43,3 +43,14 @@ Thumbs.db
 # Misc
 *.log
 .vercel
+
+# Development docs & scripts (do not commit)
+AGENTS.md
+PLAN.md
+UI-PLAN.md
+setup-llm.bat
+setup-llm.ps1
+# Only keep root README.md, remove subdirectory placeholder READMEs
+src/**/README.md
+prisma/README.md
+public/README.md
