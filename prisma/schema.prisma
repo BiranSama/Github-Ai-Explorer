@@ -28,6 +28,7 @@ model Project {
   starGrowthLogs           StarGrowthLog[]
   starsYesterday            Int?       @default(0)
   lastGrowthUpdate          DateTime?
+  embedding                 ProjectEmbedding?
 
   @@map("projects")
 }
@@ -62,4 +63,21 @@ model PushLog {
   project   Project   @relation(fields: [projectId], references: [id])
 
   @@map("push_logs")
+}
+
+model ProjectEmbedding {
+  id        Int      @id @default(autoincrement())
+  projectId String   @unique
+  vector    String   // JSON array of floats
+  createdAt DateTime @default(now())
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model ProjectEdge {
+  id       Int    @id @default(autoincrement())
+  sourceId String
+  targetId String
+  weight   Float  // cosine similarity score
+
+  @@unique([sourceId, targetId])
 }

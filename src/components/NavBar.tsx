@@ -5,14 +5,15 @@ import PreferencesPanel from './PreferencesPanel'
 import { ThemeToggle } from './ThemeProvider'
 
 interface Props {
-  activeTab: 'trending' | 'search' | 'recommend'
-  onTabChange: (tab: 'trending' | 'search' | 'recommend') => void
+  activeTab: 'trending' | 'search' | 'recommend' | 'graph'
+  onTabChange: (tab: 'trending' | 'search' | 'recommend' | 'graph') => void
 }
 
 const tabs = [
   { id: 'trending' as const, label: '热门榜单' },
   { id: 'search' as const, label: '搜索发现' },
   { id: 'recommend' as const, label: 'AI推荐' },
+  { id: 'graph' as const, label: '知识图谱' },
 ]
 
 export default function NavBar({ activeTab, onTabChange }: Props) {

@@ -84,7 +84,11 @@ export default function TrendingTab() {
           </div>
         </div>
       </div>
-      <ProjectDrawer projectId={drawerId} onClose={() => setDrawerId(null)} />
+      <ProjectDrawer
+        projectId={drawerId}
+        onClose={() => setDrawerId(null)}
+        onSelectProject={(id) => setDrawerId(id)}
+      />
     </>
   )
 }

@@ -66,7 +66,11 @@ export default function RecommendTab({ preferredLanguages = [] }: Props) {
         batchKey={batchKey}
       />
 
-      <ProjectDrawer projectId={drawerId} onClose={() => setDrawerId(null)} />
+      <ProjectDrawer
+        projectId={drawerId}
+        onClose={() => setDrawerId(null)}
+        onSelectProject={(id) => setDrawerId(id)}
+      />
     </div>
   )
 }

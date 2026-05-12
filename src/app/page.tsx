@@ -4,13 +4,14 @@ import NavBar from '@/components/NavBar'
 import TrendingTab from '@/components/TrendingTab'
 import SearchTab from '@/components/SearchTab'
 import RecommendTab from '@/components/RecommendTab'
+import GraphTab from '@/components/GraphTab'
 import HeroSection from '@/components/HeroSection'
 import TechStackFooter from '@/components/TechStackFooter'
 import DynamicBackground from '@/components/DynamicBackground'
 import { usePreferences } from '@/hooks/usePreferences'
 
 export default function Home() {
-  const [tab, setTab] = useState<'trending' | 'search' | 'recommend'>('trending')
+  const [tab, setTab] = useState<'trending' | 'search' | 'recommend' | 'graph'>('trending')
   const { prefs } = usePreferences()
 
   return (
@@ -22,6 +23,7 @@ export default function Home() {
         {tab === 'trending' && <TrendingTab />}
         {tab === 'search' && <SearchTab />}
         {tab === 'recommend' && <RecommendTab preferredLanguages={prefs?.preferredLanguages || []} />}
+        {tab === 'graph' && <GraphTab />}
       </main>
       <TechStackFooter />
     </div>

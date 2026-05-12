@@ -4,13 +4,15 @@ import { useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useProject } from '@/hooks/useProject'
 import ElectricBorder from './ElectricBorder'
+import RelatedGraph from './RelatedGraph'
 
 interface Props {
   projectId: string | null
   onClose: () => void
+  onSelectProject?: (id: string) => void
 }
 
-export default function ProjectDrawer({ projectId, onClose }: Props) {
+export default function ProjectDrawer({ projectId, onClose, onSelectProject }: Props) {
   const { project, loading, summaryLoading, error, summarize } = useProject(projectId)
 
   useEffect(() => {
@@ -159,6 +161,11 @@ export default function ProjectDrawer({ projectId, onClose }: Props) {
                         </motion.p>
                       )}
                     </div>
+
+                    {/* Related Projects Graph */}
+                    {projectId && onSelectProject && (
+                      <RelatedGraph projectId={projectId} onSelectProject={onSelectProject} />
+                    )}
 
                     {/* Action */}
                     <div className="mt-8">
