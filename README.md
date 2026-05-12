@@ -93,8 +93,6 @@ cd github-ai-explorer
 npm install
 ```
 
-> **依赖需要手动上传吗？** 不需要。`node_modules/` 已通过 `.gitignore` 忽略，别人克隆后运行 `npm install` 即可自动安装所有依赖。你只需确保 `package.json` 和 `package-lock.json` 在仓库中。
-
 ### 3. 一键配置环境变量（推荐）
 
 项目提供了交互式脚本，自动帮你检测模型、验证 API Key、生成 VAPID 密钥，无需手动编辑 `.env`。
