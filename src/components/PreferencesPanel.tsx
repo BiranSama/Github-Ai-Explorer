@@ -3,23 +3,26 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { usePreferences } from '@/hooks/usePreferences'
+import OnboardingWizard from './OnboardingWizard'
+import { ROLES, EXPERIENCE_LEVELS, INTEREST_AREAS, TECH_STACK_OPTIONS, GOALS } from '@/lib/interests'
 
 const LANGUAGES = ['TypeScript','JavaScript','Python','Rust','Go','Java','C++','Ruby','Swift','Kotlin']
 
 interface Props { onClose?: () => void }
 export default function PreferencesPanel({ onClose }: Props) {
-  const { prefs, loading, update } = usePreferences()
+  const { prefs, loading, update, initProfile } = usePreferences()
   const [langs, setLangs] = useState<string[]>([])
   const [notifyEnabled, setNotifyEnabled] = useState(false)
-  const [interval, setInterval] = useState(60)
+  const [interval, setInterval_] = useState(60)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [showWizard, setShowWizard] = useState(false)
 
   useEffect(() => {
     if (prefs) {
       setLangs(prefs.preferredLanguages)
       setNotifyEnabled(prefs.notifyEnabled)
-      setInterval(prefs.notifyInterval)
+      setInterval_(prefs.notifyInterval)
     }
   }, [prefs])
 
@@ -37,6 +40,17 @@ export default function PreferencesPanel({ onClose }: Props) {
     } finally {
       setSaving(false)
     }
+  }
+
+  if (showWizard) {
+    return (
+      <OnboardingWizard
+        onComplete={async (profile) => {
+          await initProfile(profile)
+          setShowWizard(false)
+        }}
+      />
+    )
   }
 
   return (
@@ -72,6 +86,48 @@ export default function PreferencesPanel({ onClose }: Props) {
         </div>
       ) : (
         <div className="space-y-6">
+          {prefs?.onboardingCompleted && (
+            <div className="p-3 rounded-xl bg-primary/10 border border-primary/20">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">兴趣画像</span>
+                  {prefs.role && (
+                    <span className="text-xs text-muted-foreground">
+                      {ROLES.find(r => r.value === prefs.role)?.label}
+                    </span>
+                  )}
+                </div>
+                <button
+                  onClick={() => setShowWizard(true)}
+                  className="text-xs text-primary hover:underline"
+                >
+                  重新设定
+                </button>
+              </div>
+              {prefs.interests.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {prefs.interests.map(i => {
+                    const area = INTEREST_AREAS.find(a => a.value === i)
+                    return (
+                      <span key={i} className="text-xs px-2 py-0.5 rounded-full bg-secondary">
+                        {area?.emoji} {area?.label || i}
+                      </span>
+                    )
+                  })}
+                </div>
+              )}
+              {prefs.techStack.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {prefs.techStack.map(t => (
+                    <span key={t} className="text-xs px-2 py-0.5 rounded-full bg-accent">
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           <div>
             <p className="text-sm font-medium mb-3 text-muted-foreground">偏好语言</p>
             <div className="flex flex-wrap gap-2">
@@ -117,7 +173,7 @@ export default function PreferencesPanel({ onClose }: Props) {
                 value={interval}
                 min={15}
                 max={1440}
-                onChange={e => { setInterval(Number(e.target.value)); setSaved(false) }}
+                onChange={e => { setInterval_(Number(e.target.value)); setSaved(false) }}
                 className="w-full px-4 py-2.5 rounded-xl text-sm bg-background border border-input focus:ring-2 focus:ring-ring focus:outline-none transition-shadow"
               />
             </motion.div>

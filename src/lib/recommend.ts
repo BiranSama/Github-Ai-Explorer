@@ -1,58 +1,142 @@
 import { prisma } from './db'
+import { matchInterests, getRelatedTech, INTEREST_AREAS } from './interests'
 
-export interface RecommendOptions {
+export interface RecommendReason {
+  type: 'interest' | 'language' | 'techstack' | 'explore'
+  label: string
+}
+
+export interface RecommendResult {
+  project: Awaited<ReturnType<typeof prisma.project.findMany>>[number]
+  reason: RecommendReason
+}
+
+export interface RecommendContext {
+  role?: string
+  experienceLevel?: string
+  interests?: string[]
+  techStack?: string[]
+  goals?: string[]
   preferredLanguages?: string[]
   limit?: number
   excludeProjectIds?: string[]
 }
 
-export async function getRecommendations(opts: RecommendOptions = {}) {
-  const { preferredLanguages = [], limit = 10, excludeProjectIds = [] } = opts
+const WEIGHTS = {
+  interest: 0.40,
+  language: 0.25,
+  techstack: 0.20,
+  explore: 0.15,
+}
 
-  const projects = await prisma.project.findMany({
+function interestLabel(interest: string): string {
+  const area = INTEREST_AREAS.find(a => a.value === interest)
+  return area ? `匹配你的${area.label}兴趣` : `匹配你的${interest}兴趣`
+}
+
+function scoreProject(
+  project: {
+    description: string | null
+    primaryLanguage: string | null
+    name: string
+    stars: number
+  },
+  ctx: RecommendContext
+): { score: number; reason: RecommendReason } {
+  const userInterests = ctx.interests || []
+  const userTech = ctx.techStack || []
+  const userLangs = ctx.preferredLanguages || []
+  const allLangs = [...new Set([...userLangs, ...userTech.map(t => t.charAt(0).toUpperCase() + t.slice(1))])]
+
+  const matchedInterests = matchInterests(project.description, [], userInterests)
+  const relatedTech = getRelatedTech(userTech)
+  const nameLower = project.name.toLowerCase()
+  const descLower = (project.description || '').toLowerCase()
+
+  let bestReason: RecommendReason = { type: 'language', label: `热门项目` }
+  let score = 0
+
+  if (matchedInterests.length > 0) {
+    score += WEIGHTS.interest
+    bestReason = { type: 'interest', label: interestLabel(matchedInterests[0]) }
+  }
+
+  if (project.primaryLanguage && allLangs.some(l => l.toLowerCase() === project.primaryLanguage!.toLowerCase())) {
+    score += WEIGHTS.language
+    if (score <= WEIGHTS.language) {
+      bestReason = { type: 'language', label: `${project.primaryLanguage} 语言匹配` }
+    }
+  }
+
+  const isTechRelated = relatedTech.some(tech => nameLower.includes(tech) || descLower.includes(tech))
+  if (isTechRelated) {
+    score += WEIGHTS.techstack
+    if (bestReason.type !== 'interest') {
+      const matchedRelated = relatedTech.find(tech => nameLower.includes(tech) || descLower.includes(tech))
+      bestReason = { type: 'techstack', label: `与你的${matchedRelated || ''}技术栈相关` }
+    }
+  }
+
+  score += (project.stars / 200000) * 0.1
+
+  return { score, reason: bestReason }
+}
+
+export async function getRecommendations(ctx: RecommendContext = {}): Promise<RecommendResult[]> {
+  const {
+    interests = [],
+    techStack = [],
+    preferredLanguages = [],
+    limit = 10,
+    excludeProjectIds = [],
+  } = ctx
+
+  const allLangs = [...new Set([...preferredLanguages, ...techStack.map(t => t.charAt(0).toUpperCase() + t.slice(1))])]
+
+  const candidates = await prisma.project.findMany({
     where: {
       id: { notIn: excludeProjectIds },
-      ...(preferredLanguages.length > 0
-        ? { primaryLanguage: { in: preferredLanguages } }
-        : {}),
     },
     orderBy: { stars: 'desc' },
-    take: 100,
+    take: 200,
   })
 
-  if (projects.length === 0) return []
+  if (candidates.length === 0) return []
 
-  // Weighted random: stars越高选中概率越大
-  const picked: typeof projects = []
-  const remaining = [...projects]
+  const scored = candidates.map(project => {
+    const { score, reason } = scoreProject(project, ctx)
+    return { project, score, reason }
+  })
 
-  while (picked.length < limit && remaining.length > 0) {
-    const totalStars = remaining.reduce((sum, p) => sum + Math.max(p.stars, 1), 0)
-    let r = Math.random() * totalStars
-    for (let i = 0; i < remaining.length; i++) {
-      r -= Math.max(remaining[i].stars, 1)
-      if (r <= 0) {
-        picked.push(remaining.splice(i, 1)[0])
-        break
-      }
-    }
-    if (r > 0 && remaining.length > 0 && picked.length < limit) {
-      picked.push(remaining.pop()!)
-    }
-  }
+  scored.sort((a, b) => b.score - a.score)
 
-  // 混入1-2个非偏好语言但趋势极高的项目（探索推荐）
-  if (preferredLanguages.length > 0) {
-    const explore = await prisma.project.findMany({
-      where: {
-        id: { notIn: [...excludeProjectIds, ...picked.map(p => p.id)] },
-        primaryLanguage: { notIn: preferredLanguages },
-      },
-      orderBy: { stars: 'desc' },
-      take: 2,
+  const mainPicks = scored.slice(0, Math.max(limit - 2, Math.ceil(limit * 0.8)))
+
+  const mainIds = new Set(mainPicks.map(p => p.project.id))
+
+  if (allLangs.length > 0 || interests.length > 0) {
+    const exploreCandidates = candidates.filter(p =>
+      !mainIds.has(p.id) &&
+      !allLangs.some(l => l.toLowerCase() === p.primaryLanguage?.toLowerCase())
+    )
+
+    const relatedTech = getRelatedTech(techStack)
+    const nonRelatedExplore = exploreCandidates.filter(p => {
+      const nameLower = p.name.toLowerCase()
+      const descLower = (p.description || '').toLowerCase()
+      return !relatedTech.some(tech => nameLower.includes(tech) || descLower.includes(tech))
     })
-    picked.push(...explore)
+
+    const pool = nonRelatedExplore.length > 0 ? nonRelatedExplore : exploreCandidates
+    const shuffled = pool.sort(() => Math.random() - 0.5)
+    const explorePicks = shuffled.slice(0, 2).map(p => ({
+      project: p,
+      score: 0,
+      reason: { type: 'explore' as const, label: '探索发现：走出舒适区' },
+    }))
+
+    return [...mainPicks.map(p => ({ project: p.project, reason: p.reason })), ...explorePicks].slice(0, limit)
   }
 
-  return picked.slice(0, limit)
+  return mainPicks.map(p => ({ project: p.project, reason: p.reason })).slice(0, limit)
 }

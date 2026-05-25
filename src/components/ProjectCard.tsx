@@ -3,7 +3,15 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import type { Project } from '@prisma/client'
+import type { RecommendReason } from '@/lib/recommend'
 import ElectricBorder from './ElectricBorder'
+
+const REASON_COLORS: Record<string, string> = {
+  interest: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
+  language: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
+  techstack: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+  explore: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+}
 
 const langColors: Record<string, string> = {
   TypeScript: 'from-blue-400 to-blue-600',
@@ -28,10 +36,11 @@ function getLangGradient(lang: string | null): string {
 
 interface Props {
   project: Project
+  reason?: RecommendReason
   onClick?: () => void
 }
 
-export default function ProjectCard({ project, onClick }: Props) {
+export default function ProjectCard({ project, reason, onClick }: Props) {
   const [hovered, setHovered] = useState(false)
 
   return (
@@ -76,6 +85,18 @@ export default function ProjectCard({ project, onClick }: Props) {
             {project.forks.toLocaleString()}
           </span>
         </div>
+
+        {reason && (
+          <div className="mt-3">
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border ${REASON_COLORS[reason.type] || REASON_COLORS.interest}`}>
+              {reason.type === 'interest' && '🎯'}
+              {reason.type === 'language' && '💻'}
+              {reason.type === 'techstack' && '🔗'}
+              {reason.type === 'explore' && '✨'}
+              {reason.label}
+            </span>
+          </div>
+        )}
       </motion.div>
     </ElectricBorder>
   )

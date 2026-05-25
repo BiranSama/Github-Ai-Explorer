@@ -53,6 +53,13 @@ model UserPreference {
   lastNotifyAt        DateTime?
   pushSubscription    String?
   updatedAt           DateTime  @updatedAt
+
+  onboardingCompleted Boolean   @default(false)
+  role                String?
+  experienceLevel     String?
+  interests           String    @default("[]")
+  techStack           String    @default("[]")
+  goals               String    @default("[]")
 }
 
 model PushLog {

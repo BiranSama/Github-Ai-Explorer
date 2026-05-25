@@ -32,10 +32,23 @@ async function runPush() {
   const langs = ((): string[] => {
     try { return JSON.parse(prefs.preferredLanguages) } catch { return [] }
   })()
-  const projects = await getRecommendations({ preferredLanguages: langs, limit: 3 })
+  const interests = ((): string[] => {
+    try { return JSON.parse(prefs.interests) } catch { return [] }
+  })()
+  const techStack = ((): string[] => {
+    try { return JSON.parse(prefs.techStack) } catch { return [] }
+  })()
+  const results = await getRecommendations({
+    preferredLanguages: langs,
+    interests,
+    techStack,
+    role: prefs.role || undefined,
+    limit: 3,
+  })
 
   let pushedCount = 0
-  for (const project of projects) {
+  for (const item of results) {
+    const project = item.project
     try {
       await sendPushNotification(prefs.pushSubscription, {
         title: `📈 ${project.name}`,

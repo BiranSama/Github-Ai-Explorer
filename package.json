@@ -1,6 +1,7 @@
 {
   "name": "github-ai-explorer",
   "version": "0.1.0",
+  "description": "🔍 帮中文开发者读懂 GitHub 项目。AI 探嗅热门+飙升趋势，30 秒中文解读，兴趣画像智能推荐。不是又一个 Trending 浏览器——是你的项目翻译官+探嗅器。Next.js + Tailwind + Prisma + OpenAI",
   "private": true,
   "scripts": {
     "dev": "next dev",

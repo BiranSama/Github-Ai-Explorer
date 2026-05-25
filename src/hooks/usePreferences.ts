@@ -1,10 +1,16 @@
 import { useState, useEffect, useCallback } from 'react'
-import { apiGet, apiPost } from '@/lib/api'
+import { apiGet, apiPost, apiPut } from '@/lib/api'
 
 export interface UserPreferences {
   preferredLanguages: string[]
   notifyEnabled: boolean
   notifyInterval: number
+  onboardingCompleted: boolean
+  role: string | null
+  experienceLevel: string | null
+  interests: string[]
+  techStack: string[]
+  goals: string[]
 }
 
 export function usePreferences() {
@@ -27,7 +33,24 @@ export function usePreferences() {
 
   const update = useCallback(async (updates: Partial<UserPreferences>) => {
     try {
-      const data = await apiPost<UserPreferences>('/api/preferences', updates)
+      const data = await apiPut<UserPreferences>('/api/preferences', updates)
+      setPrefs(data)
+    } catch (e) {
+      setError(String(e))
+      throw e
+    }
+  }, [])
+
+  const initProfile = useCallback(async (profile: {
+    role: string
+    experienceLevel?: string
+    interests: string[]
+    techStack?: string[]
+    goals?: string[]
+    preferredLanguages?: string[]
+  }) => {
+    try {
+      const data = await apiPost<UserPreferences>('/api/preferences/init', profile)
       setPrefs(data)
     } catch (e) {
       setError(String(e))
@@ -37,5 +60,5 @@ export function usePreferences() {
 
   useEffect(() => { fetch_() }, [fetch_])
 
-  return { prefs, loading, error, update }
+  return { prefs, loading, error, update, initProfile }
 }
